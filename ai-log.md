@@ -222,3 +222,136 @@ console.log(solve());
 
 **Output:**  
 An array of objects showing the positions after each move.
+
+GPT-4o**
+
+User: A farmer needs to transport a fox, a goose, and a bag of grain across a river using a boat that can only hold the farmer and one other item. The fox cannot be left alone with the goose, and the goose cannot be left alone with the grain. The objective is to find a sequence of moves that successfully transports all three items to the other side. (javascript)
+
+GitHub Copilot: Here’s a JavaScript solution to solve the farmer's river crossing puzzle. The solution uses recursion to find the sequence of moves that satisfies the constraints.
+
+```javascript
+// Farmer, Fox, Goose, and Grain Puzzle Solver
+function solvePuzzle() {
+    const startState = {
+        left: ["farmer", "fox", "goose", "grain"],
+        right: [],
+    };
+
+    const goalState = {
+        left: [],
+        right: ["farmer", "fox", "goose", "grain"],
+    };
+
+    const moves = [];
+    const visited = new Set();
+
+    function isValidState(state) {
+        const { left, right } = state;
+
+        // Check if the fox and goose are left alone on either side
+        if ((left.includes("fox") && left.includes("goose") && !left.includes("farmer")) ||
+            (right.includes("fox") && right.includes("goose") && !right.includes("farmer"))) {
+            return false;
+        }
+
+        // Check if the goose and grain are left alone on either side
+        if ((left.includes("goose") && left.includes("grain") && !left.includes("farmer")) ||
+            (right.includes("goose") && right.includes("grain") && !right.includes("farmer"))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function stateToString(state) {
+        return JSON.stringify(state);
+    }
+
+    function moveItem(state, item, from, to) {
+        const newState = JSON.parse(JSON.stringify(state));
+        const index = newState[from].indexOf(item);
+        if (index !== -1) {
+            newState[from].splice(index, 1);
+            newState[to].push(item);
+        }
+        return newState;
+    }
+
+    function dfs(state) {
+        if (stateToString(state) === stateToString(goalState)) {
+            return true;
+        }
+
+        const stateKey = stateToString(state);
+        if (visited.has(stateKey)) {
+            return false;
+        }
+        visited.add(stateKey);
+
+        const { left, right } = state;
+        const currentSide = left.includes("farmer") ? "left" : "right";
+        const otherSide = currentSide === "left" ? "right" : "left";
+
+        // Try moving the farmer alone
+        let newState = moveItem(state, "farmer", currentSide, otherSide);
+        if (isValidState(newState)) {
+            moves.push(`Farmer moves alone to ${otherSide}`);
+            if (dfs(newState)) return true;
+            moves.pop();
+        }
+
+        // Try moving the farmer with each item on the current side
+        for (const item of state[currentSide]) {
+            if (item !== "farmer") {
+                newState = moveItem(state, item, currentSide, otherSide);
+                newState = moveItem(newState, "farmer", currentSide, otherSide);
+                if (isValidState(newState)) {
+                    moves.push(`Farmer takes ${item} to ${otherSide}`);
+                    if (dfs(newState)) return true;
+                    moves.pop();
+                }
+            }
+        }
+
+        return false;
+    }
+
+    if (dfs(startState)) {
+        return moves;
+    } else {
+        return "No solution found.";
+    }
+}
+
+console.log(solvePuzzle());
+```
+
+### Explanation:
+1. **State Representation**:
+   - The `state` object keeps track of the items on the `left` and `right` sides of the river.
+   - The farmer's position determines which side is "active."
+
+2. **Validation**:
+   - The `isValidState` function ensures that the fox and goose or the goose and grain are not left alone without the farmer.
+
+3. **Recursive Search**:
+   - The `dfs` function explores all possible moves recursively, backtracking when a move leads to an invalid state.
+
+4. **Moves**:
+   - The farmer can move alone or with one item at a time.
+
+5. **Output**:
+   - The sequence of moves is stored in the `moves` array and returned when the goal state is reached.
+
+### Example Output:
+```
+[
+  "Farmer takes goose to right",
+  "Farmer moves alone to left",
+  "Farmer takes fox to right",
+  "Farmer takes goose to left",
+  "Farmer takes grain to right",
+  "Farmer moves alone to left",
+  "Farmer takes goose to right"
+]
+```
